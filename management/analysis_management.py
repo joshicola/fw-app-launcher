@@ -6,19 +6,18 @@ from pathlib import Path
 import bson
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QAbstractItemView
 
 
 class AnalysisManagement:
     def __init__(self, main_window):
         self.main_window = main_window
         self.ui = main_window.ui
+
         # Analyses List:
         self.ui.listAnalyses.setModel(QtGui.QStandardItemModel())
         self.ui.listAnalyses.clicked.connect(self.analysis_clicked)
-        self.analysis_base_dir = self.main_window.CacheDir / "Analyses"
-        self.analysis_base_dir.mkdir(exist_ok=True)
-        self.files = {}
-        self.populate_analyses_list()
+        self.ui.listAnalyses.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         # Analyses buttons:
         self.ui.btn_new_analysis.setEnabled(False)
@@ -32,6 +31,12 @@ class AnalysisManagement:
 
         self.ui.btn_commit.clicked.connect(self.commit_analysis_to_instance)
         self.ui.btn_commit.setEnabled(False)
+
+        # Set helper variables
+        self.analysis_base_dir = self.main_window.CacheDir / "Analyses"
+        self.analysis_base_dir.mkdir(exist_ok=True)
+        self.files = {}
+        self.populate_analyses_list()
 
     def commit_analysis_to_instance(self):
         selection_model = self.ui.listAnalyses.selectionModel()

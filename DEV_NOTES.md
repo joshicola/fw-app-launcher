@@ -43,3 +43,8 @@ The `./resources` directory contains all of the functionality and resources for 
 ### management
 
 The `./management` directory contains the python files that are responsible for managing each of class of functionality.
+
+## TODOs:
+
+- [ ] Move "Node ID" functionality to a context menu item in the TreeManagement class
+- [ ] 
