@@ -22,7 +22,7 @@ class AppLauncher(QtWidgets.QMainWindow):
 
         self.source_dir = Path(op.dirname(os.path.realpath(__file__)))
 
-        Form, _ = uic.loadUiType(self.source_dir / "resource/app_launcher.ui")
+        Form, _ = uic.loadUiType(self.source_dir / "resources/app_launcher.ui")
         self.ui = Form()
         self.ui.setupUi(self)
 

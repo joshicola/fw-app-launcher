@@ -26,7 +26,7 @@ apps_config = {
                     "/Applications/Slicer.app",
                 ],
                 "file_arg_prefix": "--args",
-                "init_file": "resource/Slicer.ini",
+                "init_file": "resources/Slicer.ini",
                 "init_file_path": "~/.config/www.na-mic.org/",
                 "project_exts": ["mrb", "mrml"],
                 "project_args": "--python-script {{path}}/run.py",

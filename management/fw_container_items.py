@@ -28,7 +28,7 @@ class ContainerItem(QtGui.QStandardItem):
 
     def _files_folder(self):
         if hasattr(self.container, "files"):
-            icon_path = "resource/folder.png"
+            icon_path = "resources/folder.png"
             icon = QtGui.QIcon(str(self.source_dir / icon_path))
 
             self.filesItem = QtGui.QStandardItem()
@@ -44,7 +44,7 @@ class ContainerItem(QtGui.QStandardItem):
 
     def _analyses_folder(self):
         if hasattr(self.container, "analyses"):
-            icon_path = "resource/folder.png"
+            icon_path = "resources/folder.png"
             icon = QtGui.QIcon(str(self.source_dir / icon_path))
             self.analysesItem = QtGui.QStandardItem()
             self.analysesItem.setText("ANALYSES")
@@ -62,7 +62,7 @@ class ContainerItem(QtGui.QStandardItem):
         if hasattr(self, "child_container_name"):
             self.titleItem = QtGui.QStandardItem()
             self.titleItem.setText(self.child_container_name)
-            icon_path = "resource/folder.png"
+            icon_path = "resources/folder.png"
             icon = QtGui.QIcon(str(self.source_dir / icon_path))
             self.titleItem.setIcon(icon)
             self.appendRow(self.titleItem)
@@ -74,7 +74,7 @@ class ContainerItem(QtGui.QStandardItem):
 
 class GroupItem(ContainerItem):
     def __init__(self, parent_item, group):
-        self.icon_path = "resource/group.png"
+        self.icon_path = "resources/group.png"
         self.child_container_name = "PROJECTS"
         self.group = group
         super(GroupItem, self).__init__(parent_item, group)
@@ -91,7 +91,7 @@ class GroupItem(ContainerItem):
 
 class ProjectItem(ContainerItem):
     def __init__(self, group_item, project):
-        self.icon_path = "resource/project.png"
+        self.icon_path = "resources/project.png"
         self.child_container_name = "SUBJECTS"
         super(ProjectItem, self).__init__(group_item, project)
         self.has_analyses = True
@@ -109,7 +109,7 @@ class ProjectItem(ContainerItem):
 
 class SubjectItem(ContainerItem):
     def __init__(self, project_item, subject):
-        self.icon_path = "resource/subject.png"
+        self.icon_path = "resources/subject.png"
         self.child_container_name = "SESSIONS"
         super(SubjectItem, self).__init__(project_item, subject)
         self.has_analyses = True
@@ -127,7 +127,7 @@ class SubjectItem(ContainerItem):
 
 class SessionItem(ContainerItem):
     def __init__(self, project_item, session):
-        self.icon_path = "resource/session.png"
+        self.icon_path = "resources/session.png"
         self.child_container_name = "ACQUISITIONS"
         super(SessionItem, self).__init__(project_item, session)
         self.has_analyses = True
@@ -145,7 +145,7 @@ class SessionItem(ContainerItem):
 
 class AcquisitionItem(ContainerItem):
     def __init__(self, session_item, acquisition):
-        self.icon_path = "resource/acquisition.png"
+        self.icon_path = "resources/acquisition.png"
         super(AcquisitionItem, self).__init__(session_item, acquisition)
         self.has_analyses = True
         self.acquisition = self.container
@@ -153,7 +153,7 @@ class AcquisitionItem(ContainerItem):
 
 class AnalysisItem(ContainerItem):
     def __init__(self, parent_item, analysis):
-        self.icon_path = "resource/analysis.png"
+        self.icon_path = "resources/analysis.png"
         super(AnalysisItem, self).__init__(parent_item, analysis)
 
 
@@ -164,9 +164,9 @@ class FileItem(ContainerItem):
         self.container = file_obj
         self.file = file_obj
         if self._is_cached():
-            self.icon_path = "resource/file_cached.png"
+            self.icon_path = "resources/file_cached.png"
         else:
-            self.icon_path = "resource/file.png"
+            self.icon_path = "resources/file.png"
         super(FileItem, self).__init__(parent_item, file_obj)
 
     def _get_cache_path(self):
@@ -192,6 +192,6 @@ class FileItem(ContainerItem):
             if not file_path.parents[0].exists():
                 os.makedirs(file_path.parents[0])
             file_parent.download_file(self.file.name, str(file_path))
-            self.icon_path = "resource/file_cached.png"
+            self.icon_path = "resources/file_cached.png"
             self._set_icon()
         return file_path
