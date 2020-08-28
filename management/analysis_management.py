@@ -1,4 +1,5 @@
 import json
+import shutil
 from datetime import datetime
 from glob import glob
 from pathlib import Path
@@ -38,10 +39,71 @@ class AnalysisManagement:
         self.files = {}
         self.populate_analyses_list()
 
-    def commit_analysis_to_instance(self):
-        selection_model = self.ui.listAnalyses.selectionModel()
+    def analysis_clicked(self):
+        self.set_controls_to_list()
+
+    def new_analysis(self):
+        methods = ["Native_OS", "Docker_X11", "Docker_novnc"]
+        method = methods[
+            [
+                self.ui.rdNative.isChecked(),
+                self.ui.rdX11.isChecked(),
+                self.ui.rdNovnc.isChecked(),
+            ].index(True)
+        ]
+
         model = self.ui.listAnalyses.model()
-        item = model.itemFromIndex(selection_model.currentIndex())
+        item = self.ui.listApps.currentItem()
+        app_text = item.text()
+        analysis_text = app_text + ": " + str(datetime.now())
+        analysis_dir = self.analysis_base_dir / str(bson.ObjectId())
+        output_dir = analysis_dir / "output"
+        output_dir.mkdir(parents=True)
+
+        analysis_config = {
+            "analysis_name": analysis_text,
+            "path": str(analysis_dir),
+            "output": str(output_dir),
+            "container_id": self.main_window.tree_management.current_item.data(),
+            "app_name": app_text,
+            "os": self.main_window.app_management.platform,
+            "method": method,
+            "input_files": self.files,
+            "project_file": None,
+            "committed": None,
+        }
+
+        with open(analysis_dir / "config.json", "w") as fp:
+            json.dump(analysis_config, fp, indent=4)
+
+        item = QtGui.QStandardItem(analysis_text)
+        item.setToolTip(analysis_text)
+        item.setData(analysis_config)
+        model.appendRow(item)
+        self.ui.listAnalyses.setCurrentIndex(item.index())
+
+    def edit_analysis(self):
+        data = self.set_controls_to_list()
+        self.main_window.tree_management.cache_selected_for_open()
+        for k, v in self.files.items():
+            data["input_files"][k] = v
+
+        with open(data["path"] + "/config.json", "w") as fp:
+            json.dump(data, fp, indent=4)
+        self.main_window.app_management.launch_app(data)
+
+    def delete_analysis(self):
+        # TODO: A popup dialogue asking if the user is certain.
+        item = self.get_current_list_item()
+        data = item.data()
+        self.ui.listAnalyses.model().removeRow(item.row())
+        shutil.rmtree(data["path"], ignore_errors=True)
+        if self.ui.listAnalyses.count() == 0:
+            self.ui.btn_edit_analysis.setEnabled(False)
+            self.ui.btn_del_analysis.setEnabled(False)
+
+    def commit_analysis_to_instance(self):
+        item = self.get_current_list_item()
         data = item.data()
         analysis_parent = self.main_window.fw_client.get(data["container_id"])
         output_dir = data["output"]
@@ -78,54 +140,14 @@ class AnalysisManagement:
                 item.setData(analysis_config)
                 model.appendRow(item)
 
-    def new_analysis(self):
-        methods = ["Native_OS", "Docker_X11", "Docker_novnc"]
-        method = methods[
-            [
-                self.ui.rdNative.isChecked(),
-                self.ui.rdX11.isChecked(),
-                self.ui.rdNovnc.isChecked(),
-            ].index(True)
-        ]
-
+    def get_current_list_item(self):
+        selection_model = self.ui.listAnalyses.selectionModel()
         model = self.ui.listAnalyses.model()
-        item = self.ui.listApps.currentItem()
-        app_text = item.text()
-        analysis_text = app_text + ": " + str(datetime.now())
-        analysis_dir = self.analysis_base_dir / str(bson.ObjectId())
-        derived_dir = analysis_dir / "derived_files"
-        derived_dir.mkdir(parents=True)
-
-        analysis_config = {
-            "analysis_name": analysis_text,
-            "path": str(analysis_dir),
-            "output": str(derived_dir),
-            "container_id": self.main_window.tree_management.current_item.data(),
-            "app_name": app_text,
-            "os": self.main_window.app_management.platform,
-            "method": method,
-            "input_files": self.files,
-            "project_file": None,
-            "committed": None,
-        }
-
-        with open(analysis_dir / "config.json", "w") as fp:
-            json.dump(analysis_config, fp, indent=4)
-
-        item = QtGui.QStandardItem(analysis_text)
-        item.setToolTip(analysis_text)
-        item.setData(analysis_config)
-        model.appendRow(item)
-        self.ui.listAnalyses.setCurrentIndex(item.index())
-
-    def analysis_clicked(self):
-        self.set_controls_to_list()
+        return model.itemFromIndex(selection_model.currentIndex())
 
     def set_controls_to_list(self):
         # Ensure that the controls are set to the proper app and method before launching
-        selection_model = self.ui.listAnalyses.selectionModel()
-        model = self.ui.listAnalyses.model()
-        item = model.itemFromIndex(selection_model.currentIndex())
+        item = self.get_current_list_item()
         data = item.data()
 
         self.ui.btn_edit_analysis.setEnabled(True)
@@ -141,16 +163,3 @@ class AnalysisManagement:
         item = self.ui.listApps.findItems(data["app_name"], Qt.MatchExactly)[0]
         self.ui.listApps.setCurrentItem(item)
         return data
-
-    def edit_analysis(self):
-        data = self.set_controls_to_list()
-        self.main_window.tree_management.cache_selected_for_open()
-        for k, v in self.files.items():
-            data["input_files"][k] = v
-
-        with open(data["path"] + "/config.json", "w") as fp:
-            json.dump(data, fp, indent=4)
-        self.main_window.app_management.launch_app(data)
-
-    def delete_analysis(self):
-        pass

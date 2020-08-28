@@ -48,4 +48,7 @@ The `./management` directory contains the python files that are responsible for 
 
 - [x] This task is DONE!!!!
 - [ ] Move "Node ID" functionality to a context menu item in the TreeManagement class
-- [ ] 
+- [ ] Flywheel logo and the instance they are logged into
+- [ ] Recursively cache selected acquisitions.
+- [ ] File download progress bar.
+- [ ] https://youtu.be/H21eKZDJYxg?t=45
