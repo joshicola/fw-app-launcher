@@ -177,7 +177,7 @@ class FileItem(ContainerItem):
         for par in ["group", "project", "subject", "session", "acquisition"]:
             if file_parent.parents[par]:
                 file_path /= file_parent.parents[par]
-
+        file_path /= file_parent.id
         file_path /= self.container.id
         file_path /= self.container.name
         return file_path

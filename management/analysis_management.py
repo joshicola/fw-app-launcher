@@ -36,11 +36,12 @@ class AnalysisManagement:
         # Set helper variables
         self.analysis_base_dir = self.main_window.CacheDir / "Analyses"
         self.analysis_base_dir.mkdir(exist_ok=True)
-        self.files = {}
+        self.cache_files = self.main_window.tree_management.cache_files
         self.populate_analyses_list()
 
     def analysis_clicked(self):
-        self.set_controls_to_list()
+        item = self.get_current_list_item()
+        self.set_controls_to_list(item)
 
     def new_analysis(self):
         methods = ["Native_OS", "Docker_X11", "Docker_novnc"]
@@ -68,7 +69,7 @@ class AnalysisManagement:
             "app_name": app_text,
             "os": self.main_window.app_management.platform,
             "method": method,
-            "input_files": self.files,
+            "input_files": self.cache_files,
             "project_file": None,
             "committed": None,
         }
@@ -83,11 +84,12 @@ class AnalysisManagement:
         self.ui.listAnalyses.setCurrentIndex(item.index())
 
     def edit_analysis(self):
-        data = self.set_controls_to_list()
+        item = self.get_current_list_item()
+        data = self.set_controls_to_list(item)
         self.main_window.tree_management.cache_selected_for_open()
-        for k, v in self.files.items():
+        for k, v in self.cache_files.items():
             data["input_files"][k] = v
-
+        item.setData(data)
         with open(data["path"] + "/config.json", "w") as fp:
             json.dump(data, fp, indent=4)
         self.main_window.app_management.launch_app(data)
@@ -105,28 +107,40 @@ class AnalysisManagement:
     def commit_analysis_to_instance(self):
         item = self.get_current_list_item()
         data = item.data()
-        analysis_parent = self.main_window.fw_client.get(data["container_id"])
-        output_dir = data["output"]
-        input_files = []
-        for k, v in data["input_files"].items():
-            # resolve file reference
-            input_path = Path(v)
-            container = self.main_window.fw_client.get(
-                str(input_path.parents[1]).split("/")[-1]
+        if not data["committed"]:
+            analysis_parent = self.main_window.fw_client.get(data["container_id"])
+            output_dir = data["output"]
+            input_files = []
+            for k, v in data["input_files"].items():
+                # resolve file reference
+                input_path = Path(v)
+                container = self.main_window.fw_client.get(
+                    str(input_path.parents[1]).split("/")[-1]
+                )
+                filename = input_path.name
+                file_ref = container.get_file(filename).ref()
+                # append to input_files object
+                input_files.append(file_ref)
+
+            anal = analysis_parent.add_analysis(
+                label=data["analysis_name"], inputs=input_files
             )
-            filename = input_path.name
-            file_ref = container.get_file(filename).ref()
-            # append to input_files object
-            input_files.append(file_ref)
 
-        anal = analysis_parent.add_analysis(
-            label=data["analysis_name"], inputs=input_files
-        )
+            outputs = []
+            for path in glob(output_dir + "/*"):
+                path = Path(path)
+                if path.is_file():
+                    outputs.append(str(path))
 
-        for path in glob(output_dir + "/*"):
-            path = Path(path)
-            if path.is_file():
-                anal.upload_output(str(path))
+            anal.upload_file(outputs)
+
+            data["committed"] = str(datetime.now())
+
+            item.setData(data)
+
+            with open(data["path"] + "/config.json", "w") as fp:
+                json.dump(data, fp, indent=4)
+            self.ui.btn_commit.setEnabled(False)
 
     def populate_analyses_list(self):
         model = self.ui.listAnalyses.model()
@@ -145,14 +159,13 @@ class AnalysisManagement:
         model = self.ui.listAnalyses.model()
         return model.itemFromIndex(selection_model.currentIndex())
 
-    def set_controls_to_list(self):
+    def set_controls_to_list(self, item):
         # Ensure that the controls are set to the proper app and method before launching
-        item = self.get_current_list_item()
         data = item.data()
 
         self.ui.btn_edit_analysis.setEnabled(True)
         self.ui.btn_del_analysis.setEnabled(True)
-        self.ui.btn_commit.setEnabled(True)
+        self.ui.btn_commit.setEnabled(data["committed"] is None)
 
         # set radio value
         methods = ["Native_OS", "Docker_X11", "Docker_novnc"]

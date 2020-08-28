@@ -71,7 +71,7 @@ class TreeManagement:
 
     def cache_selected_for_open(self):
         tree = self.ui.treeView
-        self.cache_files = {}
+        self.cache_files.clear()
         for index in tree.selectedIndexes():
             file_path = self.main_window.CacheDir
             item = self.source_model.itemFromIndex(index)
