@@ -12,6 +12,12 @@ from PyQt5.QtWidgets import QAbstractItemView
 
 class AnalysisManagement:
     def __init__(self, main_window):
+        """
+        __init__ [summary]
+
+        Args:
+            main_window ([type]): [description]
+        """
         self.main_window = main_window
         self.ui = main_window.ui
 
@@ -40,10 +46,16 @@ class AnalysisManagement:
         self.populate_analyses_list()
 
     def analysis_clicked(self):
+        """
+        analysis_clicked [summary]
+        """
         item = self.get_current_list_item()
         self.set_controls_to_list(item)
 
     def new_analysis(self):
+        """
+        new_analysis [summary]
+        """
         methods = ["Native_OS", "Docker_X11", "Docker_novnc"]
         method = methods[
             [
@@ -84,6 +96,9 @@ class AnalysisManagement:
         self.ui.listAnalyses.setCurrentIndex(item.index())
 
     def edit_analysis(self):
+        """
+        edit_analysis [summary]
+        """
         item = self.get_current_list_item()
         data = self.set_controls_to_list(item)
         self.main_window.tree_management.cache_selected_for_open()
@@ -95,6 +110,9 @@ class AnalysisManagement:
         self.main_window.app_management.launch_app(data)
 
     def delete_analysis(self):
+        """
+        delete_analysis [summary]
+        """
         # TODO: A popup dialogue asking if the user is certain.
         item = self.get_current_list_item()
         data = item.data()
@@ -105,6 +123,9 @@ class AnalysisManagement:
             self.ui.btn_del_analysis.setEnabled(False)
 
     def commit_analysis_to_instance(self):
+        """
+        commit_analysis_to_instance [summary]
+        """
         item = self.get_current_list_item()
         data = item.data()
         if not data["committed"]:
@@ -143,6 +164,9 @@ class AnalysisManagement:
             self.ui.btn_commit.setEnabled(False)
 
     def populate_analyses_list(self):
+        """
+        populate_analyses_list [summary]
+        """
         model = self.ui.listAnalyses.model()
         analyses = glob(str(self.analysis_base_dir / "*"))
         for analysis_dir in [Path(an) for an in analyses]:
@@ -155,11 +179,26 @@ class AnalysisManagement:
                 model.appendRow(item)
 
     def get_current_list_item(self):
+        """
+        get_current_list_item [summary]
+
+        Returns:
+            [type]: [description]
+        """
         selection_model = self.ui.listAnalyses.selectionModel()
         model = self.ui.listAnalyses.model()
         return model.itemFromIndex(selection_model.currentIndex())
 
     def set_controls_to_list(self, item):
+        """
+        set_controls_to_list [summary]
+
+        Args:
+            item ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
         # Ensure that the controls are set to the proper app and method before launching
         data = item.data()
 

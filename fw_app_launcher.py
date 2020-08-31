@@ -14,6 +14,9 @@ from management.tree_management import TreeManagement
 
 class AppLauncher(QtWidgets.QMainWindow):
     def __init__(self):
+        """
+        __init__ [summary]
+        """
         super(AppLauncher, self).__init__()
         self.CacheDir = Path(os.path.expanduser("~") + "/flywheelIO/")
 

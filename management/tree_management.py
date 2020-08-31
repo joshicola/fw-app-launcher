@@ -7,6 +7,12 @@ from management.fw_container_items import ContainerItem, FileItem, GroupItem
 
 class TreeManagement:
     def __init__(self, main_window):
+        """
+        __init__ [summary]
+
+        Args:
+            main_window ([type]): [description]
+        """
         self.main_window = main_window
         self.ui = main_window.ui
         self.cache_files = {}
@@ -23,6 +29,12 @@ class TreeManagement:
         self.populateTree()
 
     def tree_clicked(self, index):
+        """
+        tree_clicked [summary]
+
+        Args:
+            index ([type]): [description]
+        """
         item = self.get_id(index)
         if isinstance(item, ContainerItem):
             self.ui.btn_new_analysis.setEnabled(item.has_analyses)
@@ -31,6 +43,9 @@ class TreeManagement:
             self.ui.btn_new_analysis.setEnabled(False)
 
     def populateTree(self):
+        """
+        populateTree [summary]
+        """
         groups = self.main_window.fw_client.groups()
         for group in groups:
             group_item = GroupItem(self.source_model, group)
@@ -42,6 +57,12 @@ class TreeManagement:
         return item
 
     def open_menu(self, position):
+        """
+        open_menu [summary]
+
+        Args:
+            position ([type]): [description]
+        """
         indexes = self.ui.treeView.selectedIndexes()
         if len(indexes) > 0:
             hasFile = False
@@ -57,6 +78,9 @@ class TreeManagement:
             menu.exec_(self.ui.treeView.viewport().mapToGlobal(position))
 
     def _cache_selected(self):
+        """
+        _cache_selected [summary]
+        """
         indexes = self.ui.treeView.selectedIndexes()
         if len(indexes) > 0:
             for index in indexes:
@@ -65,11 +89,20 @@ class TreeManagement:
                     item._add_to_cache()
 
     def on_expanded(self, index):
+        """
+        on_expanded [summary]
+
+        Args:
+            index ([type]): [description]
+        """
         item = self.source_model.itemFromIndex(index)
         if hasattr(item, "_on_expand"):
             item._on_expand()
 
     def cache_selected_for_open(self):
+        """
+        cache_selected_for_open [summary]
+        """
         tree = self.ui.treeView
         self.cache_files.clear()
         for index in tree.selectedIndexes():

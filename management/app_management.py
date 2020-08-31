@@ -111,6 +111,12 @@ apps_config = {
 
 class AppManagement:
     def __init__(self, main_window):
+        """
+        __init__ [summary]
+
+        Args:
+            main_window ([type]): [description]
+        """
         self.main_window = main_window
         self.ui = main_window.ui
         self.platform = platform.system()
@@ -138,6 +144,9 @@ class AppManagement:
         self.tmpdir = tempfile.TemporaryDirectory()
 
     def fill_app_list(self):
+        """
+        fill_app_list [summary]
+        """
         for k, v in apps_config.items():
             self.ui.listApps.addItem(k)  # item)
             # item = self.ui.listApps.item(self.ui.listApps.count() - 1)
@@ -153,6 +162,9 @@ class AppManagement:
             #     item.setHidden(False)
 
     def app_list_change(self):
+        """
+        app_list_change [summary]
+        """
         item = self.ui.listApps.currentItem()
         app_text = item.text()
         methods = ["Native_OS", "Docker_X11", "Docker_novnc"]
@@ -179,11 +191,20 @@ class AppManagement:
             radio_button.setEnabled(enabled)
 
     def view_in_app(self):
+        """
+        view_in_app [summary]
+        """
         self.main_window.tree_management.cache_selected_for_open()
         data = {"input_files": self.main_window.tree_management.cache_files}
         self.launch_app(data)
 
     def launch_app(self, data=None):
+        """
+        launch_app [summary]
+
+        Args:
+            data ([type], optional): [description]. Defaults to None.
+        """
         item = self.ui.listApps.currentItem()
         if item:
             app_text = item.text()
@@ -195,6 +216,13 @@ class AppManagement:
                 self.launch_novnc(apps_config[app_text]["Docker_novnc"], data)
 
     def launch_native(self, app_def_native, data):
+        """
+        launch_native [summary]
+
+        Args:
+            app_def_native ([type]): [description]
+            data ([type]): [description]
+        """
         os_platform = platform.system()
         app_def_platform = copy.deepcopy(app_def_native[os_platform])
         command = app_def_platform["command"]
@@ -251,6 +279,13 @@ class AppManagement:
         self.ui.btnLaunchApp.setEnabled(True)
 
     def launch_x11(self, app_def_x11, data):
+        """
+        launch_x11 [summary]
+
+        Args:
+            app_def_x11 ([type]): [description]
+            data ([type]): [description]
+        """
         # command = "#!/bin/bash\n"
         # command += "itksnap"  # "/Fiji.app/ImageJ-linux64"
         # for i, (k, v) in enumerate(files.items()):
@@ -290,6 +325,13 @@ class AppManagement:
         )
 
     def launch_novnc(self, app_def_novnc, data):
+        """
+        launch_novnc [summary]
+
+        Args:
+            app_def_novnc ([type]): [description]
+            data ([type]): [description]
+        """
         os_platform = platform.system()
         app_def_platform = copy.deepcopy(app_def_novnc[os_platform])
         if data.get("output"):
