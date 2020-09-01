@@ -7,15 +7,20 @@ from PyQt5.QtWidgets import QAbstractItemView
 
 
 class FolderItem(QtGui.QStandardItem):
+    """
+    Folder Items are for the convenience of collapsing long lists into a tree node.
+    """
+
     def __init__(self, parent_item, folder_name):
         """
-        __init__ [summary]
+        Initialize Folder Items unpopulated.
 
         Args:
-            parent_item ([type]): [description]
-            folder_name ([type]): [description]
+            parent_item (ContainerItem): Container Item parent for Folder Item.
+            folder_name (str): A name for the folder item (e.g. SESSIONS).
         """
         super(FolderItem, self).__init__()
+        self.source_dir = parent_item.source_dir
         icon_path = "resources/folder.png"
         icon = QtGui.QIcon(str(self.source_dir / icon_path))
         self.parent_item = parent_item
@@ -27,31 +32,51 @@ class FolderItem(QtGui.QStandardItem):
 
 
 class AnalysisFolderItem(FolderItem):
+    """
+    Folder Item specifically for analyses.
+    """
+
     def __init__(self, parent_item):
         """
-        __init__ [summary]
+        Initialize AnalysisFolderItem unpopulated.
 
         Args:
-            parent_item ([type]): [description]
+            parent_item (ContainerItem): Container that hosts analyses
+                (projects, subjects, sessions, acquisitions)
         """
         folder_name = "ANALYSES"
         super(AnalysisFolderItem, self).__init__(parent_item, folder_name)
         # TODO: put folder w/ download icon
-        icon_path = "resources/folder.png"
+        icon_path = "resources/dwnld-folder.png"
         icon = QtGui.QIcon(str(self.source_dir / icon_path))
-        self.folderItem.setIcon(icon)
+        self.setIcon(icon)
         # TODO: ensure that these work.
-        self.folderItem.setToolTip("Hi")
+        self.setToolTip("Double-Click to list Analyses.")
+
+    def _dblclicked(self):
+        if hasattr(self.parent_container, "analyses"):
+            self.parent_container = self.parent_container.reload()
+            icon_path = "resources/folder.png"
+            icon = QtGui.QIcon(str(self.source_dir / icon_path))
+            self.setIcon(icon)
+            if not self.hasChildren() and self.parent_container.analyses:
+
+                for analysis in self.parent_container.analyses:
+                    AnalysisItem(self, analysis)
 
 
 class ContainerItem(QtGui.QStandardItem):
+    """
+    TreeView node to host all common functionality for Flywheel containers.
+    """
+
     def __init__(self, parent_item, container):
         """
-        __init__ [summary]
+        Initialize new container item with its parent and flywheel container object.
 
         Args:
-            parent_item ([type]): [description]
-            container ([type]): [description]
+            parent_item (QtGui.QStandardItem): Parent of this item to instantiate.
+            container (flywheel.Container): Flywheel container (e.g. group, project,...)
         """
         super(ContainerItem, self).__init__()
         self.has_analyses = False
@@ -69,27 +94,22 @@ class ContainerItem(QtGui.QStandardItem):
 
     def _set_icon(self):
         """
-        _set_icon [summary]
+        Set the icon for the container item.
         """
         icon = QtGui.QIcon(str(self.source_dir / self.icon_path))
         self.setIcon(icon)
 
     def _files_folder(self):
         """
-        _files_folder [summary]
+        Create a "FILES" folder if self.container has one.
         """
         if hasattr(self.container, "files"):
-            icon_path = "resources/folder.png"
-            icon = QtGui.QIcon(str(self.source_dir / icon_path))
-
-            self.filesItem = QtGui.QStandardItem()
-            self.filesItem.setText("FILES")
-            self.filesItem.setIcon(icon)
-            self.appendRow(self.filesItem)
+            self.filesItem = FolderItem(self, "FILES")
 
     def _list_files(self):
         """
-        _list_files [summary]
+        List all file items of a container object under the "FILES" folder.
+        TODO: Make this a part of a filesFolderItem???
         """
         if hasattr(self.container, "files"):
             if not self.filesItem.hasChildren() and self.container.files:
@@ -98,54 +118,38 @@ class ContainerItem(QtGui.QStandardItem):
 
     def _analyses_folder(self):
         """
-        _analyses_folder [summary]
+        Create "ANALYSES" folder, if container has analyses object.
         """
         if hasattr(self.container, "analyses"):
-            icon_path = "resources/folder.png"
-            icon = QtGui.QIcon(str(self.source_dir / icon_path))
-            self.analysesItem = QtGui.QStandardItem()
-            self.analysesItem.setText("ANALYSES")
-            self.analysesItem.setIcon(icon)
-            self.appendRow(self.analysesItem)
-
-    def _list_analyses(self):
-        """
-        _list_analyses [summary]
-        """
-        if hasattr(self.container, "analyses"):
-            # self.container = self.container.reload()
-            if not self.analysesItem.hasChildren() and self.container.analyses:
-                for analysis in self.container.analyses[:10]:
-                    AnalysisItem(self.analysesItem, analysis)
+            self.analysesItem = AnalysisFolderItem(self)
 
     def _child_container_folder(self):
         """
-        _child_container_folder [summary]
+        Create a folder with the name of the child containers (e.g. SESSIONS)
         """
         if hasattr(self, "child_container_name"):
-            self.titleItem = QtGui.QStandardItem()
-            self.titleItem.setText(self.child_container_name)
-            icon_path = "resources/folder.png"
-            icon = QtGui.QIcon(str(self.source_dir / icon_path))
-            self.titleItem.setIcon(icon)
-            self.appendRow(self.titleItem)
+            self.folderItem = FolderItem(self, self.child_container_name)
 
     def _on_expand(self):
         """
-        _on_expand [summary]
+        On expansion of container tree node, list all files.
         """
+        super(ContainerItem, self)._on_expand()
         self._list_files()
-        self._list_analyses()
 
 
 class GroupItem(ContainerItem):
+    """
+    TreeView Node for the functionality of group containers.
+    """
+
     def __init__(self, parent_item, group):
         """
-        __init__ [summary]
+        Initialize Group Item with parent and group container.
 
         Args:
-            parent_item ([type]): [description]
-            group ([type]): [description]
+            parent_item (QtGui.QStandardItemModel): Top-level tree item or model.
+            group (flywheel.Group): Flywheel group container to attach as tree node.
         """
         self.icon_path = "resources/group.png"
         self.child_container_name = "PROJECTS"
@@ -154,149 +158,178 @@ class GroupItem(ContainerItem):
 
     def _list_projects(self):
         """
-        _list_projects [summary]
+        Populate with flywheel projects.
         """
-        if not self.titleItem.hasChildren():
+        if not self.folderItem.hasChildren():
             for project in self.group.projects():
-                ProjectItem(self.titleItem, project)
+                ProjectItem(self.folderItem, project)
 
     def _on_expand(self):
         """
-        _on_expand [summary]
+        On expansion of group tree node, list all projects.
         """
         super(GroupItem, self)._on_expand()
         self._list_projects()
 
 
 class ProjectItem(ContainerItem):
-    def __init__(self, group_item, project):
+    """
+    TreeView Node for the functionality of Project containers.
+    """
+
+    def __init__(self, parent_item, project):
         """
-        __init__ [summary]
+        Initialize Project Item with parent and project container.
 
         Args:
-            group_item ([type]): [description]
-            project ([type]): [description]
+            parent_item (FolderItem): The folder item tree node that is the parent.
+            project (flywheel.Project): Flywheel project container to attach as tree
+                node.
         """
         self.icon_path = "resources/project.png"
         self.child_container_name = "SUBJECTS"
-        super(ProjectItem, self).__init__(group_item, project)
+        super(ProjectItem, self).__init__(parent_item, project)
         self.has_analyses = True
         self.project = self.container
 
     def _list_subjects(self):
         """
-        _list_subjects [summary]
+        Populate with flywheel subjects.
         """
-        if not self.titleItem.hasChildren():
+        if not self.folderItem.hasChildren():
             for subject in self.project.subjects():
-                SubjectItem(self.titleItem, subject)
+                SubjectItem(self.folderItem, subject)
 
     def _on_expand(self):
         """
-        _on_expand [summary]
+        On expansion of project tree node, list all subjects.
         """
         super(ProjectItem, self)._on_expand()
         self._list_subjects()
 
 
 class SubjectItem(ContainerItem):
-    def __init__(self, project_item, subject):
+    """
+    TreeView Node for the functionality of Subject containers.
+    """
+
+    def __init__(self, parent_item, subject):
         """
-        __init__ [summary]
+        Initialize Subject Item with parent and project container.
 
         Args:
-            project_item ([type]): [description]
-            subject ([type]): [description]
+            parent_item (FolderItem): The folder item tree node that is the parent.
+            subject (flywheel.Subject): Flywheel subject container to attach as tree
+                node.
         """
         self.icon_path = "resources/subject.png"
         self.child_container_name = "SESSIONS"
-        super(SubjectItem, self).__init__(project_item, subject)
+        super(SubjectItem, self).__init__(parent_item, subject)
         self.has_analyses = True
         self.subject = self.container
 
     def _list_sessions(self):
         """
-        _list_sessions [summary]
+        Populate with flywheel sessions.
         """
-        if not self.titleItem.hasChildren():
+        if not self.folderItem.hasChildren():
             for session in self.subject.sessions():
-                SessionItem(self.titleItem, session)
+                SessionItem(self.folderItem, session)
 
     def _on_expand(self):
         """
-        _on_expand [summary]
+        On expansion of subject tree node, list all sessions.
         """
         super(SubjectItem, self)._on_expand()
         self._list_sessions()
 
 
 class SessionItem(ContainerItem):
-    def __init__(self, project_item, session):
+    """
+    TreeView Node for the functionality of Session containers.
+    """
+
+    def __init__(self, parent_item, session):
         """
-        __init__ [summary]
+        Initialize Session Item with parent and subject container.
 
         Args:
-            project_item ([type]): [description]
-            session ([type]): [description]
+            parent_item (FolderItem): The folder item tree node that is the parent.
+            session (flywheel.Session): Flywheel session container to attach as tree
+                node.
         """
         self.icon_path = "resources/session.png"
         self.child_container_name = "ACQUISITIONS"
-        super(SessionItem, self).__init__(project_item, session)
+        super(SessionItem, self).__init__(parent_item, session)
         self.has_analyses = True
         self.session = self.container
 
     def _list_acquisitions(self):
         """
-        _list_acquisitions [summary]
+        Populate with flywheel acquisitions.
         """
-        if not self.titleItem.hasChildren():
+        if not self.folderItem.hasChildren():
             for acquisition in self.session.acquisitions():
-                AcquisitionItem(self.titleItem, acquisition)
+                AcquisitionItem(self.folderItem, acquisition)
 
     def _on_expand(self):
         """
-        _on_expand [summary]
+        On expansion of session tree node, list all acquisitions.
         """
         super(SessionItem, self)._on_expand()
         self._list_acquisitions()
 
 
 class AcquisitionItem(ContainerItem):
-    def __init__(self, session_item, acquisition):
+    """
+    TreeView Node for the functionality of Acquisition containers.
+    """
+
+    def __init__(self, parent_item, acquisition):
         """
-        __init__ [summary]
+        Initialize Acquisition Item with parent and Acquisition container.
 
         Args:
-            session_item ([type]): [description]
-            acquisition ([type]): [description]
+            parent_item (FolderItem): The folder item tree node that is the parent.
+            acquisition (flywheel.Acquisition): Flywheel acquisitin container to attach
+                as tree node.
         """
         self.icon_path = "resources/acquisition.png"
-        super(AcquisitionItem, self).__init__(session_item, acquisition)
+        super(AcquisitionItem, self).__init__(parent_item, acquisition)
         self.has_analyses = True
         self.acquisition = self.container
 
 
 class AnalysisItem(ContainerItem):
+    """
+    TreeView Node for the functionality of Analysis objects.
+    """
+
     def __init__(self, parent_item, analysis):
         """
-        __init__ [summary]
+        Initialize Subject Item with parent and analysis object.
 
         Args:
-            parent_item ([type]): [description]
-            analysis ([type]): [description]
+            parent_item (FolderItem): The folder item tree node that is the parent.
+            analysis (flywheel.Analysis): Flywheel analysis object to attach as tree
+                node.
         """
         self.icon_path = "resources/analysis.png"
         super(AnalysisItem, self).__init__(parent_item, analysis)
 
 
 class FileItem(ContainerItem):
+    """
+    TreeView Node for the functionality of File objects.
+    """
+
     def __init__(self, parent_item, file_obj):
         """
-        __init__ [summary]
+        Initialize File Item with parent and file object.
 
         Args:
-            parent_item ([type]): [description]
-            file_obj ([type]): [description]
+            parent_item (FolderItem): The folder item tree node that is the parent.
+            file_obj (flywheel.FileEntry): File object of the tree node.
         """
         file_obj.label = file_obj.name
         self.parent_item = parent_item
@@ -314,10 +347,10 @@ class FileItem(ContainerItem):
 
     def _get_cache_path(self):
         """
-        _get_cache_path [summary]
+        Construct cache path of file (e.g. cache_root/group/.../file_id/file_name).
 
         Returns:
-            [type]: [description]
+            pathlib.Path: Cache Path to file indicated.
         """
         file_parent = self.parent_item.parent().container
         file_path = Path(os.path.expanduser("~") + "/flywheelIO/")
@@ -332,19 +365,19 @@ class FileItem(ContainerItem):
 
     def _is_cached(self):
         """
-        _is_cached [summary]
+        Check if file is cached.
 
         Returns:
-            [type]: [description]
+            bool: If file is cached locally on disk.
         """
         return self._get_cache_path().exists()
 
     def _add_to_cache(self):
         """
-        _add_to_cache [summary]
+        Add file to cache directory under path.
 
         Returns:
-            [type]: [description]
+            pathlib.Path: Path to file in cache.
         """
         file_path = self._get_cache_path()
         file_parent = self.parent_item.parent().container
@@ -353,5 +386,6 @@ class FileItem(ContainerItem):
                 os.makedirs(file_path.parents[0])
             file_parent.download_file(self.file.name, str(file_path))
             self.icon_path = "resources/file_cached.png"
+            self.setToolTip("File is cached.")
             self._set_icon()
         return file_path

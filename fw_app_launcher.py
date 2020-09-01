@@ -13,9 +13,11 @@ from management.tree_management import TreeManagement
 
 
 class AppLauncher(QtWidgets.QMainWindow):
+    "Main window for the application."
+
     def __init__(self):
         """
-        __init__ [summary]
+        Initialize application.
         """
         super(AppLauncher, self).__init__()
         self.CacheDir = Path(os.path.expanduser("~") + "/flywheelIO/")
@@ -29,6 +31,7 @@ class AppLauncher(QtWidgets.QMainWindow):
         self.ui = Form()
         self.ui.setupUi(self)
 
+        # Initialize related component subsets
         self.tree_management = TreeManagement(self)
         self.app_management = AppManagement(self)
         self.analysis_management = AnalysisManagement(self)
