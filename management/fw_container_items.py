@@ -134,7 +134,7 @@ class ContainerItem(QtGui.QStandardItem):
         """
         On expansion of container tree node, list all files.
         """
-        super(ContainerItem, self)._on_expand()
+        # super(ContainerItem, self)._on_expand()
         self._list_files()
 
 

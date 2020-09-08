@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 import flywheel
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtGui, QtWidgets, uic
 
 from management.analysis_management import AnalysisManagement
 from management.app_management import AppManagement
@@ -40,6 +40,7 @@ class AppLauncher(QtWidgets.QMainWindow):
 if __name__ == "__main__":
     source_dir = Path(os.path.dirname(os.path.realpath(__file__)))
     app = QtWidgets.QApplication([])
+    app.setWindowIcon(QtGui.QIcon(str(source_dir / "resources/flywheel.png")))
     application = AppLauncher()
     application.show()
     sys.exit(app.exec())

@@ -11,12 +11,16 @@ from PyQt5.QtWidgets import QAbstractItemView
 
 
 class AnalysisManagement:
+    """
+    Class that coordinates all local analysis-related functionality.
+    """
+
     def __init__(self, main_window):
         """
-        __init__ [summary]
+        Initializes and populates all app-related components.
 
         Args:
-            main_window ([type]): [description]
+            main_window (AppLauncher): Component-initialized main window.
         """
         self.main_window = main_window
         self.ui = main_window.ui
@@ -47,14 +51,18 @@ class AnalysisManagement:
 
     def analysis_clicked(self):
         """
-        analysis_clicked [summary]
+        When analysis is clicked, the methods used to launch it are enforced.
+        TODO: Select tree item container related to uncommitted analysis.
+        TODO: Select analysis tree item related to committed analysis.
         """
         item = self.get_current_list_item()
         self.set_controls_to_list(item)
 
     def new_analysis(self):
         """
-        new_analysis [summary]
+        Create a new analysis using specified app and method.
+        
+        Identify with flywheel container.
         """
         methods = ["Native_OS", "Docker_X11", "Docker_novnc"]
         method = methods[
@@ -97,7 +105,10 @@ class AnalysisManagement:
 
     def edit_analysis(self):
         """
-        edit_analysis [summary]
+        Adds selected files to analysis and launches selected method.
+
+        Enforces the method used to create analysis.
+        TODO: Use the tree to add to analysis. Drag and drop?
         """
         item = self.get_current_list_item()
         data = self.set_controls_to_list(item)
@@ -111,7 +122,7 @@ class AnalysisManagement:
 
     def delete_analysis(self):
         """
-        delete_analysis [summary]
+        Remove analysis from list and file system.
         """
         # TODO: A popup dialogue asking if the user is certain.
         item = self.get_current_list_item()
@@ -124,7 +135,9 @@ class AnalysisManagement:
 
     def commit_analysis_to_instance(self):
         """
-        commit_analysis_to_instance [summary]
+        Commit to Flywheel instance by uploading files to instance analysis.
+        
+        Further commits for this analysis are disabled.
         """
         item = self.get_current_list_item()
         data = item.data()
@@ -165,7 +178,7 @@ class AnalysisManagement:
 
     def populate_analyses_list(self):
         """
-        populate_analyses_list [summary]
+        Populate analyses list with local analyses currently cached on disk.
         """
         model = self.ui.listAnalyses.model()
         analyses = glob(str(self.analysis_base_dir / "*"))
@@ -180,10 +193,10 @@ class AnalysisManagement:
 
     def get_current_list_item(self):
         """
-        get_current_list_item [summary]
+        Returns the current item of the analyses list.
 
         Returns:
-            [type]: [description]
+            QtGui.QStandardItem: Current item selected
         """
         selection_model = self.ui.listAnalyses.selectionModel()
         model = self.ui.listAnalyses.model()
@@ -191,13 +204,13 @@ class AnalysisManagement:
 
     def set_controls_to_list(self, item):
         """
-        set_controls_to_list [summary]
+        Set controls to reflect the app and method used to create this analysis.
 
         Args:
-            item ([type]): [description]
+            item (QtGui.QStandardItem): Referenced analysis item
 
         Returns:
-            [type]: [description]
+            dict: Dictionary describing a local analysis object.
         """
         # Ensure that the controls are set to the proper app and method before launching
         data = item.data()

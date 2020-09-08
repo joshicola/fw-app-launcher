@@ -110,12 +110,16 @@ apps_config = {
 
 
 class AppManagement:
+    """
+    Class that coordinates all app-related functionality.
+    """
+
     def __init__(self, main_window):
         """
-        __init__ [summary]
+        Initializes and populates all app-related components.
 
         Args:
-            main_window ([type]): [description]
+            main_window (AppLauncher): Component-initialized main window.
         """
         self.main_window = main_window
         self.ui = main_window.ui
@@ -134,19 +138,26 @@ class AppManagement:
         self.ui.lbl_platform.setText(message)
 
         self.ui.btnLaunchApp.clicked.connect(self.view_in_app)
+        # TODO: How do I compensate for the "drag select"?
         self.ui.listApps.itemSelectionChanged.connect(self.app_list_change)
 
         self.ui.listApps.setCurrentItem(self.ui.listApps.item(0))
 
-        self.ui.rdNative.setChecked(True)
+        # self.ui.rdNative.setChecked(False)
 
         self.fill_app_list()
         self.tmpdir = tempfile.TemporaryDirectory()
 
     def fill_app_list(self):
         """
-        fill_app_list [summary]
+        Fill app list view with apps that are locally available.
+
+        Locally available entails:
+            * There is an executable on the system
+            * There is a docker image that supports x11 or novnc interaction
         """
+        # TODO: Change applist to QListView to accept data objects
+        # TODO: List app only if it has a valid launcher.... Or "Dim"
         for k, v in apps_config.items():
             self.ui.listApps.addItem(k)  # item)
             # item = self.ui.listApps.item(self.ui.listApps.count() - 1)
@@ -163,14 +174,13 @@ class AppManagement:
 
     def app_list_change(self):
         """
-        app_list_change [summary]
+        On selecting a new app from list, adjust radio buttons to available methods.
         """
         item = self.ui.listApps.currentItem()
         app_text = item.text()
         methods = ["Native_OS", "Docker_X11", "Docker_novnc"]
-        for i, radio_button in enumerate(
-            [self.ui.rdNative, self.ui.rdX11, self.ui.rdNovnc]
-        ):
+        radio_buttons = [self.ui.rdNative, self.ui.rdX11, self.ui.rdNovnc]
+        for i, radio_button in enumerate(radio_buttons):
             data = apps_config[app_text].get(methods[i])
             enabled = True
 
@@ -189,43 +199,51 @@ class AppManagement:
                         if img.tags
                     ]
             radio_button.setEnabled(enabled)
+        enabled_buttons = [rdo for rdo in radio_buttons if rdo.isEnabled()]
+        if enabled_buttons:
+            enabled_buttons[0].setChecked(True)
 
     def view_in_app(self):
         """
-        view_in_app [summary]
+        Launch app with what files are selected in the tree view.
         """
         self.main_window.tree_management.cache_selected_for_open()
-        data = {"input_files": self.main_window.tree_management.cache_files}
-        self.launch_app(data)
+        app_data = {"input_files": self.main_window.tree_management.cache_files}
+        self.launch_app(app_data)
 
-    def launch_app(self, data=None):
+    def launch_app(self, app_data):
         """
-        launch_app [summary]
+        Launch app with indicated data from tree or local analysis.
 
         Args:
-            data ([type], optional): [description]. Defaults to None.
+            app_data (dict): A dictionary referencing selected files from tree or
+                local analysis.
         """
         item = self.ui.listApps.currentItem()
         if item:
             app_text = item.text()
             if self.ui.rdNative.isChecked():
-                self.launch_native(apps_config[app_text]["Native_OS"], data)
+                self.launch_native(apps_config[app_text]["Native_OS"], app_data)
             elif self.ui.rdX11.isChecked():
-                self.launch_x11(apps_config[app_text]["Docker_X11"], data)
+                self.launch_x11(apps_config[app_text]["Docker_X11"], app_data)
             elif self.ui.rdNovnc.isChecked():
-                self.launch_novnc(apps_config[app_text]["Docker_novnc"], data)
+                self.launch_novnc(apps_config[app_text]["Docker_novnc"], app_data)
 
-    def launch_native(self, app_def_native, data):
+    def launch_native(self, app_def_native, app_data):
         """
-        launch_native [summary]
+        Launch an application on a native operating system (osx, linux, windows).
 
         Args:
-            app_def_native ([type]): [description]
-            data ([type]): [description]
+            app_def_native (dict): A dictionary containing app-specific launch
+                configuration.
+            app_data (dict): A dictionary referencing selected files from tree or
+                local analysis.
         """
         os_platform = platform.system()
         app_def_platform = copy.deepcopy(app_def_native[os_platform])
         command = app_def_platform["command"]
+        # init_file may need to be managed....differently
+        # Slicer.ini has user-specific paths....
         if app_def_platform.get("init_file"):
             init_file_template = (
                 self.main_window.source_dir / app_def_platform["init_file"]
@@ -237,17 +255,17 @@ class AppManagement:
             original_init = init_file_dir / init_file_template.name
             original_init.rename(init_file_dir / (init_file_template.name + ".bak"))
 
-        if data.get("output"):
+        if app_data.get("output"):
             extensions = [
-                glob(data["output"] + "/*." + ext)
+                glob(app_data["output"] + "/*." + ext)
                 for ext in app_def_platform["project_exts"]
             ]
         else:
-            data["output"] = os.path.expanduser("~")
+            app_data["output"] = os.path.expanduser("~")
             extensions = [[]]
 
         if app_def_platform.get("init_file"):
-            template_output = renderer.render_path(init_file_template, data)
+            template_output = renderer.render_path(init_file_template, app_data)
 
             with open(original_init, "w") as fp:
                 fp.write(template_output)
@@ -261,13 +279,13 @@ class AppManagement:
         # if any(extensions):
         #     project_file = [fl[0] for fl in extensions if fl][0]
         #     command.append(app_def_platform["file_arg_prefix"])
-        #     template_output = renderer.render(app_def_platform["project_args"], data)
+        #     template_output = renderer.render(app_def_platform["project_args"], app_data)
         #     command.append(template_output)
         # else:
-        if data["input_files"]:
+        if app_data["input_files"]:
             if app_def_platform.get("file_arg_prefix"):
                 command.append(app_def_platform["file_arg_prefix"])
-            for i, (_, v) in enumerate(data["input_files"].items()):
+            for i, (_, v) in enumerate(app_data["input_files"].items()):
                 if i == 0 and app_def_platform.get("first_file_flag"):
                     command.append(app_def_platform.get("first_file_flag"))
                 elif i == 1 and app_def_platform.get("additional_files_flag"):
@@ -278,13 +296,17 @@ class AppManagement:
         results = subprocess.run(command)
         self.ui.btnLaunchApp.setEnabled(True)
 
-    def launch_x11(self, app_def_x11, data):
+    def launch_x11(self, app_def_x11, app_data):
         """
-        launch_x11 [summary]
+        Launch an application with an x11 window from within docker container.
+
+        This will not work on OS X due to discontinued nvidia drivers.
 
         Args:
-            app_def_x11 ([type]): [description]
-            data ([type]): [description]
+            app_def_x11 (dict): A dictionary containing app-specific launch
+                configuration.
+            app_data (dict): A dictionary referencing selected files from tree or
+                local analysis.
         """
         # command = "#!/bin/bash\n"
         # command += "itksnap"  # "/Fiji.app/ImageJ-linux64"
@@ -324,19 +346,21 @@ class AppManagement:
             "stevepieper/slicer-chronicle",  # **docker_kwargs
         )
 
-    def launch_novnc(self, app_def_novnc, data):
+    def launch_novnc(self, app_def_novnc, app_data):
         """
-        launch_novnc [summary]
+        Launch dockerized application in a novnc web interface.
 
         Args:
-            app_def_novnc ([type]): [description]
-            data ([type]): [description]
+            app_def_novnc (dict): A dictionary containing app-specific launch
+                configuration.
+            app_data (dict): A dictionary referencing selected files from tree or
+                local analysis.
         """
         os_platform = platform.system()
         app_def_platform = copy.deepcopy(app_def_novnc[os_platform])
-        if data.get("output"):
+        if app_data.get("output"):
             extensions = [
-                glob(data["output"] + "/*." + ext)
+                glob(app_data["output"] + "/*." + ext)
                 for ext in app_def_platform["project_exts"]
             ]
         else:
@@ -353,15 +377,15 @@ class AppManagement:
         else:
             files = [
                 v.replace("/Users/joshuajacobs/", "/home/researcher/")
-                for k, v in data["input_files"].items()
+                for k, v in app_data["input_files"].items()
             ]
             env = {
                 "SLICER_ARGUMENTS": " ".join(files),
             }
         self.tmpdir.cleanup()
         self.tmpdir = tempfile.TemporaryDirectory()
-        if data.get("output"):
-            output_dir = data["output"]
+        if app_data.get("output"):
+            output_dir = app_data["output"]
             mode = "rw"
         else:
             output_dir = self.tmpdir.name
@@ -379,7 +403,7 @@ class AppManagement:
         docker_kwargs["environment"] = env
 
         client = docker.from_env()
-        # TODO: If the container is running, send the data rather than relaunching.
+        # TODO: If the container is running, send the app_data rather than relaunching.
         #     : give the user an option to shut it down.
         try:
             container = client.containers.get(docker_kwargs["name"])

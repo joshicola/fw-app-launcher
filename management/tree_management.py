@@ -43,7 +43,7 @@ class TreeManagement:
         Cascade the tree clicked event to relevant tree node items.
 
         Args:
-            index (QtCore.QModelIndex): [description]
+            index (QtCore.QModelIndex): Index of tree item clicked.
         """
         item = self.get_id(index)
         if isinstance(item, ContainerItem):

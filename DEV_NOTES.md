@@ -32,7 +32,7 @@ The project is divided into various sections to assist with ease of use.
 
 ### Top-Level
 
-On the top-level, there is the `fw_app_launcher.py`. This is contains the central application object and reference to the main form.  It is intended to be a brief reference to the three groups of related functionality.  These three groups are: The tree representation of the Flywheel hierarchy, the list of available applications to view data in, and the local analyses that we are saving data to.
+On the top-level, there is the `fw_app_launcher.py`. This is contains the central application object and reference to the main form.  It is intended to be a brief reference to the three groups of related functionality.  These three groups are: The tree representation of the Flywheel Container Hierarchy, the list of available applications to view data in, and the local analyses that we are saving data to.
 
 As with the other form components, the `.ui` file that defines the form and all of the tabs resides in `./resources/`. We will revisit this later.
 
@@ -45,10 +45,9 @@ The `./resources` directory contains all of the functionality and resources for 
 The `./management` directory contains the python files that are responsible for managing each of class of functionality.
 
 ## TODOs:
-
-- [x] This task is DONE!!!!
 - [ ] Move "Node ID" functionality to a context menu item in the TreeManagement class
 - [ ] Flywheel logo and the instance they are logged into
 - [ ] Recursively cache selected acquisitions.
 - [ ] File download progress bar.
-- [ ] https://youtu.be/H21eKZDJYxg?t=45
+- [ ] BrainLife Example: https://youtu.be/H21eKZDJYxg?t=45
+- [ ] Analyses need to be associated with an instance...regardless of their user permissions.
