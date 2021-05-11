@@ -1,4 +1,5 @@
-# pyqt5_app_launcher
+# fw-app-launcher
+
 
 This project provides a cross-platform user interface to download, view, and produce application-specific workflows from selected data within a particular Flywheel instance.
 
