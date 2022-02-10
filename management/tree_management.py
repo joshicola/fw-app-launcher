@@ -20,7 +20,7 @@ class TreeManagement:
         Initialize TreeView object from Main Window.
 
         Args:
-            main_window (QtWidgets.QMainWindow): [description]
+            main_window (AppLauncher): Component-initialized main window.
         """
         self.main_window = main_window
         self.ui = main_window.ui
